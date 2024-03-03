@@ -1,0 +1,46 @@
+@startuml
+
+class AccountController <<inbound adapter>> {}
+
+interface AccountUsecase <<inbound port>> {
+    + registerAccount(..): Account
+    + verifyEmail(..): Account
+    + login(..): Account
+    + changePassword(..): Account
+    + subscribeMembership(..): Account
+    + deregisterAccount(..): Boolean
+    + listAccounts(): Collection<Account>
+}
+
+class AccountService <<application service>> {}
+
+interface Account <<root entity>> {
+    + accountNumber: AccountNumber
+    + username: Username
+    + email: Email
+    + password: Password
+    + state: AccountState
+    + membership: Membership
+    + registeredAt: Instant
+}
+
+class AccountImpl implements Account
+
+interface BaseRepository <<outbound port>> {
+    + save(T): T
+    + findAll(): Collection<T>
+    + findBy(ID): T?
+    + deleteBy(ID): Boolean
+}
+
+class AccountInMemoryRepository <<outbound adapter>> {}
+
+AccountController -right-> AccountUsecase: uses
+AccountService -left-|> AccountUsecase: implements
+AccountService -right-> BaseRepository: uses
+BaseRepository <|-right AccountInMemoryRepository: implements
+AccountUsecase ..> Account
+AccountService ..> Account: uses
+AccountInMemoryRepository ..> Account
+
+@enduml

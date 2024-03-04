@@ -56,7 +56,7 @@ fun main() {
                                 email = ask("email", it),
                             )
 
-                        println(if (response != null) "Success" else "Fail")
+                        println(if (response) "Success" else "Fail")
                     }
 
                     "login" -> {

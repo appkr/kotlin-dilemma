@@ -1,6 +1,7 @@
 package dev.appkr.kotlindilemma.adapter.driven
 
 import dev.appkr.kotlindilemma.domain.model.Account
+import dev.appkr.kotlindilemma.domain.model.AccountState
 import dev.appkr.kotlindilemma.port.outbound.BaseRepository
 import java.util.concurrent.ConcurrentHashMap
 
@@ -21,6 +22,7 @@ class AccountInMemoryRepository : BaseRepository<Account, String> {
 
     override fun findBy(username: String): Account? {
         return store.get(username)
+            ?.takeIf { it.state != AccountState.DELETED }
     }
 
     override fun deleteBy(username: String): Boolean {

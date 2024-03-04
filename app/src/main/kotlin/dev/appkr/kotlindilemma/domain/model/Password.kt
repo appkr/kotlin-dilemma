@@ -1,14 +1,7 @@
 package dev.appkr.kotlindilemma.domain.model
 
-interface Password {
-    val value: String
-
-    // should have "internal" visibility
-    fun matches(passwordToChallenge: String): Boolean {
-        return value == passwordToChallenge
-    }
-
-    fun validate() {
+data class Password(val value: String) {
+    init {
         val isLongEnough = value.length >= 8
         val hasNumber = value.any { it.isDigit() }
         val hasUpperCase = value.any { it.isUpperCase() }
@@ -19,14 +12,11 @@ interface Password {
         }
     }
 
-    companion object {
-        // ANTI-PATTERN: parent -> child dependency
-        fun of(value: String): Password = PasswordImpl(value)
+    fun matches(passwordToChallenge: String): Boolean {
+        return value == passwordToChallenge
     }
-}
 
-data class PasswordImpl(override val value: String) : Password {
-    init {
-        validate()
+    companion object {
+        fun of(value: String) = Password(value)
     }
 }

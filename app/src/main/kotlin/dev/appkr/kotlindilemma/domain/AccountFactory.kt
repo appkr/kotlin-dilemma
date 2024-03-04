@@ -16,12 +16,12 @@ object AccountFactory {
         password: String,
         requestAt: Instant,
     ) = AccountImpl(
-        accountNumber = AccountNumber.newInstance(),
-        username = Username.of(username),
-        email = Email.of(email),
-        password = Password.of(password),
-        state = AccountState.NEW,
-        membership = Membership.of(requestAt),
-        registeredAt = requestAt,
+        _accountNumber = AccountNumber.newInstance(),
+        _username = Username.of(username),
+        _email = Email.of(email),
+        _password = Password.of(password),
+        _state = AccountState.NEW,
+        _membership = Membership.of(requestAt),
+        _registeredAt = requestAt,
     )
 }

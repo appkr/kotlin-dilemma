@@ -2,13 +2,8 @@ package dev.appkr.kotlindilemma.domain.model
 
 import java.util.UUID
 
-interface AccountNumber {
-    val value: UUID
-
+data class AccountNumber(val value: UUID) {
     companion object {
-        // ANTI-PATTERN: parent -> child dependency
-        fun newInstance() = AccountNumberImpl(UUID.randomUUID())
+        fun newInstance() = AccountNumber(UUID.randomUUID())
     }
 }
-
-data class AccountNumberImpl(override val value: UUID) : AccountNumber

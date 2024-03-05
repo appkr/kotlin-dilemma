@@ -1,17 +1,17 @@
 ## Kotlin Dilemma
 
-> kotlin `interface`엔 `field`(property)를 선언할 수 있다.
-> field는 데이터를 담는 것인데, Kotlin field는 접근자, 변경자가 가능한 property이니 기능이라 생각한 설계일까?
+- Kotlin의 필드는 접근자(`getter`)와 변경자(`setter`) 기능을 내재한 `property`이다
+- Kotlin `interface`엔 `field`(property)를 선언할 수 있다.
+- Kotlin interface의 `field`는 public만 가능하고, `val` 키워드(불변, 읽기 전용)으로만 선언할 수 있다; 즉, 접근자만 노출된다
 
-### Kotlin Interface(keyword)의 특성
+### 하고 싶은 것
 
-- `field`를 선언할 수 있다
-- Kotlin의 필드는 접근자(`getter`)와 변경자(`setter`) 기능을 내재한 `property`이다 
-- Kotlin interface의 `field`는 public만 가능하고, `val` 키워드(불변, 읽기 전용)으로만 선언할 수 있다; 즉, 접근자만 노출된다 
+- (1) 캡슐화, (2) 다형성, (3) 상속 등 객체 지향의 일반 특성을 모두 충족하고 싶다
+- 데이터와 동작을 모두 포함하는 표현력이 풍부한 도메인 모델(엔티티 + 값객체)를 만들고 싶다
+- Kotlin property의 접근자(getter) 기능을 쓰고 싶다
+- Kotlin interface의 default method를 이용해서 하위 객체의 부담을 덜고 싶다
 
 ### 인터페이스를 상속한 구현 객체의 일례
-
-> `password`란 데이터 필드에 대해 다형이 필요할까? 문제점을 부각시키기 위한 억지춘향 예제일 뿐이다.
 
 - (3) 인터페이스 상속
     ```kotlin
@@ -20,7 +20,7 @@
         val password: Password
     }
     
-    data class AccountImpl(
+    class AccountImpl(
         override val username: Username,
         override val password: Password,
         // 컴파일 오류: Cannot weaken access privilege 'public' for 'password' in 'Account'
@@ -30,7 +30,7 @@
 
 ### Password 변경하는 유스케이스
 
-- 인터페이스에 기본 구현(default method)을 제공하는 것이 불가하다 -> **컴파일 불가**
+- 읽기 전용(val)이므로 인터페이스에 상태를 변경하는 기본 구현(default method)을 제공하는 것이 불가하다
     ```kotlin
     class AccountService(
         private val repository: AccountRepository,
@@ -52,25 +52,17 @@
     }
     ```
 
-- 구현 클래스의 필드를 가변으로 바꾸고, 하위 캐스팅하여 문제를 해결한다 -> **상위 모델에 changePassword() 기능이 없으므로, (2) 다형성을 충족할 수 없다; password 필드에 대한 (1) 캡슐화가 깨진다**
+- interface에서 상태를 변경하는 기본 구현을 구현 클래스로 옮긴다
+- 구현 클래스의 필드를 가변으로 바꾸고, 서비스 레이어에서 하위 캐스팅하여 문제를 해결한다 
+- **상위 모델에 changePassword() 기능이 없으므로 구현 객체가 늘어나면 (2) 다형성을 충족할 수 없다**
+- **password 필드에 대한 (1) 캡슐화가 깨진다**
     ```kotlin
-    class AccountService(
-        private val repository: AccountRepository,
-    ) {
-        fun changePassword(username: String, password: String) {
-            val account: Account // Account 객체를 구한다
-            // ANTI-PATTERN: 하위 캐스팅을 해야 한다
-            val updated = (account as AccountImpl).changePassword(password)
-            repository.save(updated)
-        }
-    }
-    
     interface Account {
         val username: Username
         val password: Password
     }
 
-    data class AccountImpl(
+    class AccountImpl(
         override val username: Username,
         override var password: Password,
     ) : Account {
@@ -78,34 +70,64 @@
             this.password = PasswordImpl(password)
         }
     }
-    ```
 
-- 불변 속성을 존중하고, 하위 캐스팅하여 문제를 해결한다 -> **[Anemic Domain Model](https://en.wikipedia.org/wiki/Anemic_domain_model), Thin Model-Fat Service, [Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html) 스타일의 코드 양산 -> 이런 스타일의 코드는 복잡성을 정복하기 어렵다**
-    ```kotlin
     class AccountService(
         private val repository: AccountRepository,
     ) {
         fun changePassword(username: String, password: String) {
             val account: Account // Account 객체를 구한다
-            // ANTI-PATTERN: 하위 캐스팅을 해야 한다
-            val updated = (account as AccountImpl).copy(password = PasswordImpl(password))
+            // ANTI-PATTERN: 하위 캐스팅
+            (account as AccountImpl).password = PasswordImpl(password)
+  
             repository.save(updated)
         }
     }
-    
+    ```
+
+- 불변 속성을 존중하고, 하위 캐스팅하여 문제를 해결한다
+- **[Anemic Domain Model](https://en.wikipedia.org/wiki/Anemic_domain_model), Thin Model-Fat Service, [Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html) 스타일의 코드 양산할 가능성이 크다**
+- **이런 스타일의 코드는 복잡성을 정복하기 어렵다**
+    ```kotlin 
     interface Account {
         val username: Username
         val password: Password
     }
 
-    data class AccountImpl(
+    class AccountImpl(
         override val username: Username,
         override val password: Password,
     ) : Account
+
+    class AccountService(
+        private val repository: AccountRepository,
+    ) {
+        fun changePassword(username: String, password: String) {
+            val account: Account // Account 객체를 구한다
+            // 보일러플레이트 코드를 많이 써야 하고, 자칫 맵핑 실수할 가능성도 있다
+            val updated = AccountImpl(
+                username = account.username,
+                password = PasswordImpl(password)
+            )     
+            repository.save(updated)
+        }
+    }
     ```
 
-- 가장 쉬운 방법, 인터페이스에 선언한 필드를 가변으로 바꾼다 -> **(1) 캡슐화가 깨진다**
-    ```kotlin
+- 가장 쉬운 방법, 인터페이스에 선언한 필드를 가변으로 바꾼다
+- **(1) 캡슐화가 깨진다**
+    ```kotlin 
+    interface Account {
+        val username: Username
+        var password: Password
+    }
+
+    class AccountImpl(
+        override val username: Username,
+        override var password: Password,
+        // 컴파일 오류: Cannot weaken access privilege 'public' for 'password' in 'Account' 
+        // override internal var password: Password,
+    ) : Account
+
     class AccountService(
         private val repository: AccountRepository,
     ) {
@@ -115,32 +137,10 @@
             repository.save(account)
         }
     }
-    
-    interface Account {
-        val username: Username
-        var password: Password
-    }
-
-    data class AccountImpl(
-        override val username: Username,
-        override var password: Password,
-        // 컴파일 오류: Cannot weaken access privilege 'public' for 'password' in 'Account' 
-        // override internal var password: Password,
-    ) : Account
     ```
 
 - Kotlin 언어 설계자의 의도로 추정되는 구현은? -> **인터페이스가 구현을 알아야 하는 문제가 생긴다**
-    ```kotlin
-    class AccountService(
-        private val repository: AccountRepository,
-    ) {
-        fun changePassword(username: String, password: String) {
-            val account: Account // Account 객체를 구한다
-            val updated = account.changePassword(password)
-            repository.save(updated)
-        }
-    }
-    
+    ```kotlin 
     interface Account {
         val username: Username
         val password: Password
@@ -153,10 +153,20 @@
         }
     }
 
-    data class AccountImpl(
+    class AccountImpl(
         override val username: Username,
         override val password: Password,
     ) : Account
+
+    class AccountService(
+        private val repository: AccountRepository,
+    ) {
+        fun changePassword(username: String, password: String) {
+            val account: Account // Account 객체를 구한다
+            val updated = account.changePassword(password)
+            repository.save(updated)
+        }
+    }
     ```
 
 ---
@@ -173,7 +183,7 @@
         fun changePassword(password: String) // 빈 구현을 제공할 것인가?
     }
 
-    data class AccountImpl(
+    class AccountImpl(
         private var _username: Username,
         private var _password: Password,
     ) : Account {
@@ -193,7 +203,7 @@
 
 2. Entity를 데이터 명세(getter/setter)를 선언한 interface로, 구현은 생성->변경->소멸의 수명을 갖는 클래스, Value(값 객체)는 no interface 불변 클래스로..
     - interface가 제공한 접근자는 그냥 쓴다
-    - 변경자는 빈 구현을 제공한다
+    - 변경자는 빈 구현을 제공한다 -> 구현 객체가 여러 개일때는 전부 유사한 로직을 구현해줘야 해서 부담이다
     ```kotlin
     // Not Tested
     interface Account {
@@ -205,7 +215,7 @@
         }
     }
 
-    data class AccountImpl(
+    class AccountImpl(
         override val username: Username,
         override var password: Password,
     ) : Account {
@@ -218,11 +228,11 @@
     data class Password(val value: String)  
     ```
 
-3. 모델은 interface를 만들지 않는 방법
+3. 모델은 interface를 만들지 않는 방법 -> 객체 외부에서 다른 객체로 맵핑할 때 접근자가 필요하다
 
     ```kotlin
     // Not Tested
-    data class Account(
+    class Account(
         private var username: Username,
         private var password: Password,
     ) {

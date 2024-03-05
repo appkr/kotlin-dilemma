@@ -35,7 +35,7 @@ interface Account {
     }
 }
 
-data class AccountImpl(
+class AccountImpl(
     override val accountNumber: AccountNumber,
     override val username: Username,
     override val email: Email,

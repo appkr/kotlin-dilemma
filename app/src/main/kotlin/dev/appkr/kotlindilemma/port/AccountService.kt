@@ -21,7 +21,6 @@ class AccountService(
         password: String,
         requestAt: Instant,
     ): Account {
-        // Implement recovery logic from DORMANT or DELETED state
         repository.findBy(username)
             ?.let { throw IllegalArgumentException("Username already taken!!") }
 
@@ -52,8 +51,16 @@ class AccountService(
             throw IllegalAccessException("Membership expired")
         }
 
-        // ANTI-PATTERN: Sub Casting
-        val updated = (account as AccountImpl).copy(state = AccountState.ACTIVATED)
+        // Boilerplate
+        val updated = AccountImpl(
+            accountNumber = account.accountNumber,
+            username = account.username,
+            email = account.email,
+            password = account.password,
+            state = AccountState.ACTIVATED,
+            membership = account.membership,
+            registeredAt = account.registeredAt,
+        )
 
         return repository.save(updated)
     }
@@ -77,10 +84,16 @@ class AccountService(
     ): Account {
         val account = repository.findBy(username) ?: throw NoSuchElementException("Account not exists")
 
-        // ANTI-PATTERN: Sub Casting
-        val updated =
-            (account as AccountImpl)
-                .copy(password = PasswordImpl(password))
+        // Boilerplate
+        val updated = AccountImpl(
+            accountNumber = account.accountNumber,
+            username = account.username,
+            email = account.email,
+            password = PasswordImpl(password),
+            state = account.state,
+            membership = account.membership,
+            registeredAt = account.registeredAt,
+        )
 
         return repository.save(updated)
     }
@@ -106,7 +119,16 @@ class AccountService(
                         to = account.membership.validThrough.to.plus(30L, ChronoUnit.DAYS),
                     ),
             )
-        val updatedAccount = (account as AccountImpl).copy(membership = updatedMembership)
+        // Boilerplate
+        val updatedAccount = AccountImpl(
+            accountNumber = account.accountNumber,
+            username = account.username,
+            email = account.email,
+            password = account.password,
+            state = AccountState.ACTIVATED,
+            membership = updatedMembership,
+            registeredAt = account.registeredAt,
+        )
 
         return repository.save(updatedAccount)
     }
@@ -120,10 +142,16 @@ class AccountService(
             throw NoSuchElementException("Account not exists")
         }
 
-        // ANTI-PATTERN: Sub Casting; Violates Tell Don't Ask
-        val updated =
-            (account as AccountImpl)
-                .copy(state = AccountState.DELETED)
+        // Boilerplate
+        val updated = AccountImpl(
+            accountNumber = account.accountNumber,
+            username = account.username,
+            email = account.email,
+            password = account.password,
+            state = AccountState.DELETED,
+            membership = account.membership,
+            registeredAt = account.registeredAt,
+        )
 
         return repository.save(updated) != null
     }

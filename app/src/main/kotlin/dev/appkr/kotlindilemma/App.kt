@@ -5,7 +5,6 @@ import de.m3y.kformat.table
 import dev.appkr.kotlindilemma.adapter.driven.AccountInMemoryRepository
 import dev.appkr.kotlindilemma.adapter.driving.AccountController
 import dev.appkr.kotlindilemma.adapter.driving.AdminController
-import dev.appkr.kotlindilemma.adapter.driving.mapper.AccountMapper
 import dev.appkr.kotlindilemma.adapter.driving.resource.AccountResource
 import dev.appkr.kotlindilemma.port.AccountService
 import java.io.BufferedReader
@@ -14,14 +13,13 @@ import java.time.Clock
 import java.time.ZoneId
 
 fun main() {
-    val commands = listOf("register", "verifyEmail", "login", "changePassword", "subscribeMembership", "deregister", "list", "exit")
+    val commands =
+        listOf("register", "verifyEmail", "login", "changePassword", "subscribeMembership", "deregister", "list", "exit")
 
     // Simulate Singleton Instance
     val usecase = AccountService(AccountInMemoryRepository())
-    val mapper = AccountMapper()
-    val clock = Clock.system(ZoneId.of("Asia/Seoul"))
-    val accountController = AccountController(usecase, mapper, clock)
-    val adminController = AdminController(usecase, mapper)
+    val accountController = AccountController(usecase, Clock.system(ZoneId.of("Asia/Seoul")))
+    val adminController = AdminController(usecase)
 
     BufferedReader(InputStreamReader(System.`in`)).use {
         while (true) {

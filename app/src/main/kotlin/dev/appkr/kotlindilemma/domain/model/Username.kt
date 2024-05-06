@@ -8,11 +8,6 @@ interface Username {
             throw IllegalStateException("Username too short")
         }
     }
-
-    companion object {
-        // ANTI-PATTERN: parent -> child dependency
-        fun of(value: String): Username = UsernameImpl(value)
-    }
 }
 
 data class UsernameImpl(override val value: String) : Username {

@@ -1,7 +1,8 @@
 package dev.appkr.kotlindilemma.adapter.driving.mapper
 
-abstract class BaseMapper<M, R> {
-    abstract fun toResource(model: M): R
+abstract class BaseMapper<DomainModel, ApiResource> {
+    abstract fun toResource(model: DomainModel): ApiResource
 
-    fun toResource(modelList: Collection<M>) = modelList.map { toResource(it) }
+    fun toResource(modelList: Collection<DomainModel>) =
+        modelList.map { toResource(it) }
 }

@@ -7,34 +7,37 @@ import java.time.Clock
 
 class AccountController(
     private val usecase: AccountUsecase,
-    private val mapper: AccountMapper,
     private val clock: Clock,
 ) {
     fun registerAccount(
         username: String,
         email: String,
         password: String,
-    ): AccountResource {
-        return usecase.registerAccount(username, email, password, clock.instant())
-            .let { mapper.toResource(it) }
-    }
+    ): AccountResource =
+        usecase.registerAccount(username, email, password, clock.instant())
+            .let { AccountMapper.toResource(it) }
 
     fun verifyEmail(
         username: String,
         email: String,
-    ) = usecase.verifyEmail(username, email, clock.instant()) != null
+    ): Boolean =
+        usecase.verifyEmail(username, email, clock.instant()) != null
 
     fun login(
         username: String,
         password: String,
-    ) = usecase.login(username, password, clock.instant()) != null
+    ): Boolean =
+        usecase.login(username, password, clock.instant()) != null
 
     fun changePassword(
         username: String,
         password: String,
-    ) = usecase.changePassword(username, password, clock.instant()) != null
+    ): Boolean =
+        usecase.changePassword(username, password, clock.instant()) != null
 
-    fun subscribeMembership(username: String) = usecase.subscribeMembership(username, clock.instant()) != null
+    fun subscribeMembership(username: String): Boolean =
+        usecase.subscribeMembership(username, clock.instant()) != null
 
-    fun deregisterAccount(username: String) = usecase.deregisterAccount(username)
+    fun deregisterAccount(username: String): Boolean =
+        usecase.deregisterAccount(username)
 }

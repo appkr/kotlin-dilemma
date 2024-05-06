@@ -5,7 +5,9 @@ import dev.appkr.kotlindilemma.domain.model.Account
 import dev.appkr.kotlindilemma.domain.model.DateTimeRange
 import java.time.ZoneOffset
 
-class AccountMapper : BaseMapper<Account, AccountResource>() {
+object AccountMapper : BaseMapper<Account, AccountResource>() {
+    private val ZONE_OFFSET = ZoneOffset.of("+09:00")
+
     override fun toResource(model: Account) =
         with(model) {
             AccountResource(
@@ -25,11 +27,6 @@ class AccountMapper : BaseMapper<Account, AccountResource>() {
         return source.substring(0, halfIndex) + "*".repeat(source.length - halfIndex)
     }
 
-    private fun format(dateTimeRange: DateTimeRange): String {
-        return "${dateTimeRange.from.atOffset(ZONE_OFFSET)}~${dateTimeRange.to.atOffset(ZONE_OFFSET)}"
-    }
-
-    companion object {
-        private val ZONE_OFFSET = ZoneOffset.of("+09:00")
-    }
+    private fun format(dateTimeRange: DateTimeRange): String =
+        "${dateTimeRange.from.atOffset(ZONE_OFFSET)}~${dateTimeRange.to.atOffset(ZONE_OFFSET)}"
 }

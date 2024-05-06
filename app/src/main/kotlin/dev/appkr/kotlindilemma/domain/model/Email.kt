@@ -11,9 +11,6 @@ interface Email {
 
     companion object {
         val REGEX_EMAIL = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$".toRegex()
-
-        // ANTI-PATTERN: parent -> child dependency
-        fun of(value: String): Email = EmailImpl(value)
     }
 }
 
